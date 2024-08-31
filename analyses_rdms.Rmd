@@ -1,0 +1,162 @@
+---
+title: "analyses_rdms"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## **Plotting RDMs as heat maps**
+Visual inspection is very important to understand and interpret similarity data. R offers many packages and options to visualize heat maps. Here are just a few examples. HINT: To properly read the plot, the reader must know what the colour scale represents (legend).
+
+## Load data
+```{r}
+# Load data (RDM)
+# Header as F because you don't want first row of your data to become colnames
+df1<-read.csv("rdm_exp1_freesorting.csv",header=F)
+df2<-read.csv("rdm_exp2_acoustics.csv",header=F)
+df3<-read.csv("rdm_exp3_semantics.csv",header=F)
+```
+
+```{r}
+# Colnames and rownames for your matrix
+animacy_order <- c(
+    'LaughingAdultFemale',
+    'LaughingAdultMale',
+    'LaughingChild',
+    'LaughingGroup',
+    'CryingAdultFemale',
+    'CryingAdultMale',
+    'CryingChild',
+    'ChildrenPlaying',
+    'CocktailParty',
+    'CrowdCheering',
+    'CrowdApplause',
+    'CoughingAdultFemale',
+    'CoughingAdultMale',
+    'Sneezing',
+    'Snoring',
+    'ThroatClearing',
+    'Footsteps',
+    'CatHissing',
+    'CatMeowing',
+    'CatPurring',
+    'BirdSong',
+    'BirdSquawk',
+    'BirdsFlyingOff',
+    'DogBarking',
+    'DogGrowling',
+    'DogHowling',
+    'HorseGalloping',
+    'HorseNeighing',
+    'HorseSnorting',
+    'CowMoo',
+    'InsectBuzzing',
+    'InsectsStridulation',
+    'CarHorn',
+    'CarSkidding',
+    'CarStarting',
+    'TrainBreaks',
+    'TrainSignal',
+    'TrainWagons',
+    'Helicopter',
+    'Propeller',
+    'JetPassing',
+    'DrillingPneumatic',
+    'Drilling',
+    'SawingManual',
+    'Sawing',
+    'Hammer',
+    'Fire',
+    'Rain',
+    'River',
+    'SeaWaves',
+    'Thunder',
+    'Waterfall',
+    'Wind'
+)
+```
+
+```{r}
+# Rename colnames and rownames in your matrix with the proper sound names
+colnames(df1) <- animacy_order
+rownames(df1) <- animacy_order
+colnames(df2) <- animacy_order
+rownames(df2) <- animacy_order
+colnames(df3) <- animacy_order
+rownames(df3) <- animacy_order
+```
+
+
+## Heatmap with stats package
+R documentation: https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/heatmap
+```{r}
+library(stats)
+```
+
+```{r}
+# Represent your data as numeric matrix
+df1_mat <- data.matrix(df1, rownames.force = NA)
+df2_mat <- data.matrix(df2, rownames.force = NA)
+df3_mat <- data.matrix(df3, rownames.force = NA)
+```
+
+```{r}
+# Plot with clustering dendrigrams
+stats::heatmap(df1_mat, keep.dendro = T, scale='none')
+stats::heatmap(df2_mat, keep.dendro = T, scale='none')
+stats::heatmap(df3_mat, keep.dendro = T, scale='none')
+```
+
+```{r}
+# Plot without clustering dendrograms
+stats::heatmap(dfmat_mat, keep.dendro = F, Colv=NA, Rowv=NA, scale='none')
+```
+
+
+## Save your plot
+(1) This will save a jpeg file in your current directory. The resolution of the image by default will be 480x480 pixels.
+```{r}
+jpeg(file="name_your_plot_1.jpg")
+stats::heatmap(dfmat_mat)
+dev.off()
+```
+
+(2) This will save a png file in your current directory. You can adjust the size of your image.
+```{r}
+png(file="name_your_plot_2.png", width=600, height=350)
+stats::heatmap(dfmat_mat)
+dev.off()
+```
+
+(3) This will save a png file in your current directory. You can adjust the resolution of your image.
+```{r}
+png(file="name_your_plot_3.png", width=3.25, height=3.25, units = "in", res = 1200, pointsize = 4)
+stats::heatmap(dfmat_mat)
+dev.off()
+```
+
+
+## Applying fancy colors to your heat map
+Palettes: http://applied-r.com/rcolorbrewer-palettes/
+```{r}
+library(RColorBrewer)
+mycolors <- colorRampPalette(brewer.pal(8, "PiYG"))(25)
+stats::heatmap(dfmat_mat, col = mycolors)
+```
+
+
+## Heat map with gplots package
+```{r}
+library("gplots")
+heatmap.2(dfmat_mat, scale = "none", col = bluered(100), 
+          trace = "none", density.info = "none")
+```
+
+
+## Heat map with pheatmap package
+```{r}
+library("pheatmap")
+pheatmap(dfmat, cutree_rows = 4)
+```

@@ -1,0 +1,183 @@
+---
+title: "analyses_correlations"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+installed.packages("ape")
+```
+
+## **Mantel's Test**
+The functions introduced below compute Mantel's permutation test for the similarity of two matrices. Mantel's Test permutes the rows and columns of the second matrix randomly. It calculates a test statistic and the significance of the correlation through permutations of the rows and columns in the input matrices. It compares the permuted distribution with the test statistic observed for the actual data.
+
+R implementations of Mantel's test can analyse symmetric as well as (since version 5.1 of ape) asymmetric matrices (see Mantel 1967, Sects. 4 and 5). The diagonals of both matrices are ignored.
+
+You can use different packages in R to compute this test. They differ slightly in calculating the test statistic and the output they produce, but you still need to decide what type of method you use for correlation and how many permutations you want. Please read through the documentation to ensure that you run the appropriate test for your type of data and what values you need to report. HINT: When making decisions about it and interpreting the result, think of Mantel's Test as an extended version of a correlation test.
+
+# Load data
+Because we only have 1 matrix now, let's create two matrices of random numbers and use it as an example.
+```{r}
+# Create two matrices that look like our data (i.e., 53 x 53)
+df1<-read.csv("rdm_exp1_freesorting.csv",header=F)
+df2<-read.csv("rdm_exp2_acoustics.csv",header=F)
+df3<-read.csv("rdm_exp3_semantics.csv",header=F)
+```
+
+```{r}
+# Colnames and rownames for your matrix
+animacy_order <- c(
+    'LaughingAdultFemale',
+    'LaughingAdultMale',
+    'LaughingChild',
+    'LaughingGroup',
+    'CryingAdultFemale',
+    'CryingAdultMale',
+    'CryingChild',
+    'ChildrenPlaying',
+    'CocktailParty',
+    'CrowdCheering',
+    'CrowdApplause',
+    'CoughingAdultFemale',
+    'CoughingAdultMale',
+    'Sneezing',
+    'Snoring',
+    'ThroatClearing',
+    'Footsteps',
+    'CatHissing',
+    'CatMeowing',
+    'CatPurring',
+    'BirdSong',
+    'BirdSquawk',
+    'BirdsFlyingOff',
+    'DogBarking',
+    'DogGrowling',
+    'DogHowling',
+    'HorseGalloping',
+    'HorseNeighing',
+    'HorseSnorting',
+    'CowMoo',
+    'InsectBuzzing',
+    'InsectsStridulation',
+    'CarHorn',
+    'CarSkidding',
+    'CarStarting',
+    'TrainBreaks',
+    'TrainSignal',
+    'TrainWagons',
+    'Helicopter',
+    'Propeller',
+    'JetPassing',
+    'DrillingPneumatic',
+    'Drilling',
+    'SawingManual',
+    'Sawing',
+    'Hammer',
+    'Fire',
+    'Rain',
+    'River',
+    'SeaWaves',
+    'Thunder',
+    'Waterfall',
+    'Wind'
+)
+```
+
+```{r}
+# Let's pretend our data has names
+# Rename colnames and rownames in your matrix with the proper sound names
+colnames(df1) <- animacy_order
+rownames(df1) <- animacy_order
+colnames(df2) <- animacy_order
+rownames(df2) <- animacy_order
+colnames(df3) <- animacy_order
+rownames(df3) <- animacy_order
+```
+
+
+```{r}
+# Have a look at the matrices (visual inspection is important to understand and interpret your data)
+library(stats)
+stats::heatmap(as.numeric(df1), keep.dendro = F, Colv=NA, Rowv=NA, scale='none')
+stats::heatmap(as.numeric(df2), keep.dendro = F, Colv=NA, Rowv=NA, scale='none')
+stats::heatmap(as.numeric(df3), keep.dendro = F, Colv=NA, Rowv=NA, scale='none')
+```
+
+## Mantel's Test with ape package
+R documentation: https://www.rdocumentation.org/packages/ape/versions/5.6-1/topics/mantel.test
+
+HINT: Try and change the number of permutations to see what happens
+```{r}
+library(ape)
+mantape12 <- ape::mantel.test(df1, df2, nperm = 100, graph = TRUE,
+            main = "Mantel test: an example with 53 X 53 dummy matrices",
+            xlab = "z-statistic", ylab = "Density",
+            sub = "The vertical line shows the observed z-statistic")
+mantape12
+mantape13 <- ape::mantel.test(df1, df3, nperm = 100, graph = TRUE,
+            main = "Mantel test: an example with 53 X 53 dummy matrices",
+            xlab = "z-statistic", ylab = "Density",
+            sub = "The vertical line shows the observed z-statistic")
+mantape13
+```
+This implementation of Mantel's Test computes z-statistic and the corresponding p-value. While the p-value is understandable, the z-score is the sum of the products of the corresponding elements of the matrices, so don't confuse it with the standard z-score based on the normal distribution. The value of z-statistic depends on the magnitude of your measured variables (kind of like covariance) and is, thus, hard to interpret. So one usually uses a normalized Mantel's coefficient, rM.
+
+```{r}
+# Have a look at z-statistic and p
+mantape12$z.stat
+mantape12$p
+mantape13$z.stat
+mantape13$p
+```
+
+
+## Mantel's Test with vegan package
+R documentation: https://rdrr.io/rforge/vegan/man/mantel.html
+Description (includes interpretation of output): https://jkzorz.github.io/2019/07/08/mantel-test.html
+```{r}
+library(vegan)
+# You can choose between pearson, spearman and kendall method for correlation and define the number of permutations
+mantveg = vegan::mantel(df1, df2, method = "spearman", permutations = 9999, na.rm = TRUE)
+mantveg
+```
+
+## Mantel's Test with ade 4 package
+R documentation: https://www.rdocumentation.org/packages/ade4/versions/1.7-6/topics/mantel.rtest
+Description (includes interpretation of output): https://stats.oarc.ucla.edu/r/faq/how-can-i-perform-a-mantel-test-in-r/
+```{r}
+library(ade4)
+# Read your matric as distances
+df1 <- dist(df1)
+df3 <- dist(df3)
+df2 <- dist(df2)
+mantade <- mantel.rtest(df1, df3, nrepet = 9999)
+mantade
+```
+
+## Other packages
+Cultevo package: https://kevinstadler.github.io/cultevo/index.html
+
+
+## **Correlation using upper triangular vectors (UTVs)**
+R documentation: https://www.rdocumentation.org/packages/Ryacas/versions/1.1.3.1/topics/upper.tri
+
+```{r}
+# Transform your data into utv
+utv1 <- df1[upper.tri(df1, diag = T)]
+utv3 <- df3[upper.tri(df3, diag = T)]
+utv2 <- df2[upper.tri(df2, diag = T)]
+```
+
+R documentation: https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/cor.test
+```{r}
+cor.test(utv1, utv3, method = "spearman")
+cor.test(utv1, utv2, method = "spearman")
+```
+
+```{r}
+cor.test(utv1, utv3,  method="kendall")
+```
+```{r}
+cor.test(utv1, utv2,  method="kendall")
+```
+

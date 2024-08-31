@@ -1,0 +1,651 @@
+---
+title: "LAB4pre"
+author: "Ed Lu"
+date: "21/03/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(psych)
+library(FactoMineR)
+library(factoextra)
+library(cluster)
+library(e1071)
+library(tensorflow)
+library(keras)
+library(reticulate)
+library(e1071)
+library(qgraph)
+library(Rtsne)
+library(tripack)
+library(deldir)
+library(reshape2)
+library(MASS)
+library(magrittr)
+library(dplyr)
+library(ggpubr)
+library(igraph)
+library(GGally)
+library(ade4)
+library(cowplot)
+library(grid)
+library(ggplotify)
+```
+
+```{r}
+df1<-read.csv("rdm_exp1_freesorting.csv",header=F)
+df2<-read.csv("rdm_exp2_acoustics.csv",header=F)
+df3<-read.csv("rdm_exp3_semantics.csv",header=F)
+colnames(df1)<-c(
+    'LaughingAdultFemale',
+    'LaughingAdultMale',
+    'LaughingChild',
+    'LaughingGroup',
+    'CryingAdultFemale',
+    'CryingAdultMale',
+    'CryingChild',
+    'ChildrenPlaying',
+    'CocktailParty',
+    'CrowdCheering',
+    'CrowdApplause',
+    'CoughingAdultFemale',
+    'CoughingAdultMale',
+    'Sneezing',
+    'Snoring',
+    'ThroatClearing',
+    'Footsteps',
+    'CatHissing',
+    'CatMeowing',
+    'CatPurring',
+    'BirdSong',
+    'BirdSquawk',
+    'BirdsFlyingOff',
+    'DogBarking',
+    'DogGrowling',
+    'DogHowling',
+    'HorseGalloping',
+    'HorseNeighing',
+    'HorseSnorting',
+    'CowMoo',
+    'InsectBuzzing',
+    'InsectsStridulation',
+    'CarHorn',
+    'CarSkidding',
+    'CarStarting',
+    'TrainBreaks',
+    'TrainSignal',
+    'TrainWagons',
+    'Helicopter',
+    'Propeller',
+    'JetPassing',
+    'DrillingPneumatic',
+    'Drilling',
+    'SawingManual',
+    'Sawing',
+    'Hammer',
+    'Fire',
+    'Rain',
+    'River',
+    'SeaWaves',
+    'Thunder',
+    'Waterfall',
+    'Wind'
+    )
+rownames(df1)<-c(
+    'LaughingAdultFemale',
+    'LaughingAdultMale',
+    'LaughingChild',
+    'LaughingGroup',
+    'CryingAdultFemale',
+    'CryingAdultMale',
+    'CryingChild',
+    'ChildrenPlaying',
+    'CocktailParty',
+    'CrowdCheering',
+    'CrowdApplause',
+    'CoughingAdultFemale',
+    'CoughingAdultMale',
+    'Sneezing',
+    'Snoring',
+    'ThroatClearing',
+    'Footsteps',
+    'CatHissing',
+    'CatMeowing',
+    'CatPurring',
+    'BirdSong',
+    'BirdSquawk',
+    'BirdsFlyingOff',
+    'DogBarking',
+    'DogGrowling',
+    'DogHowling',
+    'HorseGalloping',
+    'HorseNeighing',
+    'HorseSnorting',
+    'CowMoo',
+    'InsectBuzzing',
+    'InsectsStridulation',
+    'CarHorn',
+    'CarSkidding',
+    'CarStarting',
+    'TrainBreaks',
+    'TrainSignal',
+    'TrainWagons',
+    'Helicopter',
+    'Propeller',
+    'JetPassing',
+    'DrillingPneumatic',
+    'Drilling',
+    'SawingManual',
+    'Sawing',
+    'Hammer',
+    'Fire',
+    'Rain',
+    'River',
+    'SeaWaves',
+    'Thunder',
+    'Waterfall',
+    'Wind'
+    )
+colnames(df2)<-c(
+    'LaughingAdultFemale',
+    'LaughingAdultMale',
+    'LaughingChild',
+    'LaughingGroup',
+    'CryingAdultFemale',
+    'CryingAdultMale',
+    'CryingChild',
+    'ChildrenPlaying',
+    'CocktailParty',
+    'CrowdCheering',
+    'CrowdApplause',
+    'CoughingAdultFemale',
+    'CoughingAdultMale',
+    'Sneezing',
+    'Snoring',
+    'ThroatClearing',
+    'Footsteps',
+    'CatHissing',
+    'CatMeowing',
+    'CatPurring',
+    'BirdSong',
+    'BirdSquawk',
+    'BirdsFlyingOff',
+    'DogBarking',
+    'DogGrowling',
+    'DogHowling',
+    'HorseGalloping',
+    'HorseNeighing',
+    'HorseSnorting',
+    'CowMoo',
+    'InsectBuzzing',
+    'InsectsStridulation',
+    'CarHorn',
+    'CarSkidding',
+    'CarStarting',
+    'TrainBreaks',
+    'TrainSignal',
+    'TrainWagons',
+    'Helicopter',
+    'Propeller',
+    'JetPassing',
+    'DrillingPneumatic',
+    'Drilling',
+    'SawingManual',
+    'Sawing',
+    'Hammer',
+    'Fire',
+    'Rain',
+    'River',
+    'SeaWaves',
+    'Thunder',
+    'Waterfall',
+    'Wind'
+    )
+rownames(df2)<-c(
+    'LaughingAdultFemale',
+    'LaughingAdultMale',
+    'LaughingChild',
+    'LaughingGroup',
+    'CryingAdultFemale',
+    'CryingAdultMale',
+    'CryingChild',
+    'ChildrenPlaying',
+    'CocktailParty',
+    'CrowdCheering',
+    'CrowdApplause',
+    'CoughingAdultFemale',
+    'CoughingAdultMale',
+    'Sneezing',
+    'Snoring',
+    'ThroatClearing',
+    'Footsteps',
+    'CatHissing',
+    'CatMeowing',
+    'CatPurring',
+    'BirdSong',
+    'BirdSquawk',
+    'BirdsFlyingOff',
+    'DogBarking',
+    'DogGrowling',
+    'DogHowling',
+    'HorseGalloping',
+    'HorseNeighing',
+    'HorseSnorting',
+    'CowMoo',
+    'InsectBuzzing',
+    'InsectsStridulation',
+    'CarHorn',
+    'CarSkidding',
+    'CarStarting',
+    'TrainBreaks',
+    'TrainSignal',
+    'TrainWagons',
+    'Helicopter',
+    'Propeller',
+    'JetPassing',
+    'DrillingPneumatic',
+    'Drilling',
+    'SawingManual',
+    'Sawing',
+    'Hammer',
+    'Fire',
+    'Rain',
+    'River',
+    'SeaWaves',
+    'Thunder',
+    'Waterfall',
+    'Wind'
+    )
+colnames(df3)<-c(
+    'LaughingAdultFemale',
+    'LaughingAdultMale',
+    'LaughingChild',
+    'LaughingGroup',
+    'CryingAdultFemale',
+    'CryingAdultMale',
+    'CryingChild',
+    'ChildrenPlaying',
+    'CocktailParty',
+    'CrowdCheering',
+    'CrowdApplause',
+    'CoughingAdultFemale',
+    'CoughingAdultMale',
+    'Sneezing',
+    'Snoring',
+    'ThroatClearing',
+    'Footsteps',
+    'CatHissing',
+    'CatMeowing',
+    'CatPurring',
+    'BirdSong',
+    'BirdSquawk',
+    'BirdsFlyingOff',
+    'DogBarking',
+    'DogGrowling',
+    'DogHowling',
+    'HorseGalloping',
+    'HorseNeighing',
+    'HorseSnorting',
+    'CowMoo',
+    'InsectBuzzing',
+    'InsectsStridulation',
+    'CarHorn',
+    'CarSkidding',
+    'CarStarting',
+    'TrainBreaks',
+    'TrainSignal',
+    'TrainWagons',
+    'Helicopter',
+    'Propeller',
+    'JetPassing',
+    'DrillingPneumatic',
+    'Drilling',
+    'SawingManual',
+    'Sawing',
+    'Hammer',
+    'Fire',
+    'Rain',
+    'River',
+    'SeaWaves',
+    'Thunder',
+    'Waterfall',
+    'Wind'
+    )
+rownames(df3)<-c(
+    'LaughingAdultFemale',
+    'LaughingAdultMale',
+    'LaughingChild',
+    'LaughingGroup',
+    'CryingAdultFemale',
+    'CryingAdultMale',
+    'CryingChild',
+    'ChildrenPlaying',
+    'CocktailParty',
+    'CrowdCheering',
+    'CrowdApplause',
+    'CoughingAdultFemale',
+    'CoughingAdultMale',
+    'Sneezing',
+    'Snoring',
+    'ThroatClearing',
+    'Footsteps',
+    'CatHissing',
+    'CatMeowing',
+    'CatPurring',
+    'BirdSong',
+    'BirdSquawk',
+    'BirdsFlyingOff',
+    'DogBarking',
+    'DogGrowling',
+    'DogHowling',
+    'HorseGalloping',
+    'HorseNeighing',
+    'HorseSnorting',
+    'CowMoo',
+    'InsectBuzzing',
+    'InsectsStridulation',
+    'CarHorn',
+    'CarSkidding',
+    'CarStarting',
+    'TrainBreaks',
+    'TrainSignal',
+    'TrainWagons',
+    'Helicopter',
+    'Propeller',
+    'JetPassing',
+    'DrillingPneumatic',
+    'Drilling',
+    'SawingManual',
+    'Sawing',
+    'Hammer',
+    'Fire',
+    'Rain',
+    'River',
+    'SeaWaves',
+    'Thunder',
+    'Waterfall',
+    'Wind'
+    )
+```
+
+
+```{r}
+get_upper_tri <- function(df1){
+    df1[lower.tri(df1)]<- NA
+    return(df1)
+}
+upper_tri_df1 <- get_upper_tri(df1)
+upper_tri_df2 <- get_upper_tri(df2)
+upper_tri_df3 <- get_upper_tri(df3)
+upper_tri_df1<-as.matrix(upper_tri_df1)
+upper_tri_df2<-as.matrix(upper_tri_df2)
+upper_tri_df3<-as.matrix(upper_tri_df3)
+melted_cormat_df1 <- melt(upper_tri_df1,na.rm = TRUE)
+melted_cormat_df2 <- melt(upper_tri_df2,na.rm = TRUE)
+melted_cormat_df3 <- melt(upper_tri_df3,na.rm = TRUE)
+
+```
+
+```{r}
+A<-ggplot(data = melted_cormat_df1, aes(Var2, Var1, fill = value))+
+ geom_tile(color = "white")+
+ scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+    midpoint = 0.02, limit = c(0,0.04),space = "Lab", 
+     name="Average Dissimilarity\n(Euclidean Distance)") +
+  theme_minimal()+ 
+ theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+    size = 6, hjust = 1))+
+  theme(axis.text.y = element_text( vjust = 1, 
+    size = 6, hjust = 1))+
+  theme(
+  axis.title.x = element_blank(),
+  axis.title.y = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.border = element_blank(),
+  panel.background = element_blank(),
+  axis.ticks = element_blank(),
+  legend.justification = c(1, 0),
+  legend.position = c(0.6, 0.7),
+  legend.direction = "horizontal")+
+  guides(fill = guide_colorbar(barwidth = 7, barheight = 1,
+                title.position = "top", title.hjust = 0.5))+
+   coord_fixed()
+
+
+B<-ggplot(data = melted_cormat_df2, aes(Var2, Var1, fill = value))+
+ geom_tile(color = "white")+
+ scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+    midpoint = 0.02, limit = c(0,0.04),space = "Lab", 
+     name="Average Dissimilarity\n(Euclidean Distance)") +
+  theme_minimal()+ 
+ theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+    size = 6, hjust = 1))+
+  theme(axis.text.y = element_text( vjust = 1, 
+    size = 6, hjust = 1))+
+  theme(
+  axis.title.x = element_blank(),
+  axis.title.y = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.border = element_blank(),
+  panel.background = element_blank(),
+  axis.ticks = element_blank(),
+  legend.justification = c(1, 0),
+  legend.position = c(0.6, 0.7),
+  legend.direction = "horizontal")+
+  guides(fill = guide_colorbar(barwidth = 7, barheight = 1,
+                title.position = "top", title.hjust = 0.5))+
+   coord_fixed()
+
+C<-ggplot(data = melted_cormat_df3, aes(Var2, Var1, fill = value))+
+ geom_tile(color = "white")+
+ scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+    midpoint = 0.02, limit = c(0,0.04),space = "Lab", 
+   name="Average Dissimilarity\n(Euclidean Distance)") +
+  theme_minimal()+ 
+ theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+    size = 6, hjust = 1))+
+  theme(axis.text.y = element_text( vjust = 1, 
+    size = 6, hjust = 1))+
+  theme(
+  axis.title.x = element_blank(),
+  axis.title.y = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.border = element_blank(),
+  panel.background = element_blank(),
+  axis.ticks = element_blank(),
+  legend.justification = c(1, 0),
+  legend.position = c(0.6, 0.7),
+  legend.direction = "horizontal")+
+  guides(fill = guide_colorbar(barwidth = 7, barheight = 1,
+                title.position = "top", title.hjust = 0.5))+
+   coord_fixed()
+
+```
+
+
+```{r}
+ggarrange(A, B, C,
+          labels = c("A", "B", "C"),
+          ncol = 3, nrow = 1)
+```
+
+```{r}
+fit1 <- isoMDS(as.matrix(df1), k=2)
+fit1
+x <- fit1$points[,1]
+y <- fit1$points[,2]
+plot(x, y, xlab="Coordinate 1", ylab="Coordinate 2",
+  main="Nonmetric MDS", type="n")
+text(x, y, labels = row.names(df1), cex=.7)
+
+fit2 <- isoMDS(as.matrix(df2), k=2)
+fit2
+x <- fit2$points[,1]
+y <- fit2$points[,2]
+plot(x, y, xlab="Coordinate 1", ylab="Coordinate 2",
+  main="Nonmetric MDS", type="n")
+text(x, y, labels = row.names(df2), cex=.7)
+
+fit3 <- isoMDS(as.matrix(df3), k=2)
+fit3
+x <- fit3$points[,1]
+y <- fit3$points[,2]
+plot(x, y, xlab="Coordinate 1", ylab="Coordinate 2",
+  main="Nonmetric MDS", type="n")
+text(x, y, labels = row.names(df3), cex=.7)
+```
+
+
+```{r}
+corr.test(df1)
+```
+
+```{r}
+cor12 <- corr.test(df1, df2, method="spearman", adjust="none")
+cor1_2<-data.frame(name=colnames(df1), r=diag(cor12$r), p=diag(cor12$p))
+cor13 <- corr.test(df1, df3, method="spearman", adjust="none")
+cor1_3<-data.frame(name=colnames(df1), r=diag(cor13$r), p=diag(cor13$p))
+
+```
+
+```{r}
+df1_mean<-rowMeans(scale(df1))
+df2_mean<-rowMeans(scale(df2))
+df3_mean<-rowMeans(scale(df3))
+```
+
+
+
+```{r}
+cor(df1_mean,df2_mean)
+cor(df1_mean,df3_mean)
+```
+
+```{r}
+fit1$stress
+fit2$stress
+fit3$stress
+
+```
+```{r}
+par(mfrow=c(1,3))
+hc1 <- hclust(as.dist(df1),method = "ward.D2")
+plot(as.dendrogram(hc1),horiz=T,xlim=c(0.1,-0.05))
+hc2 <- hclust(as.dist(df2),method = "ward.D2")
+plot(as.dendrogram(hc2),horiz=T,xlim=c(0.1,-0.05))
+hc3 <- hclust(as.dist(df3),method = "ward.D2")
+plot(as.dendrogram(hc3),horiz=T,xlim=c(0.1,-0.05))
+```
+```{r}
+df1 <- dist(df1)
+df2 <- dist(df2)
+df3 <- dist(df3)
+```
+
+
+```{r}
+mantade <- mantel.rtest(df1, df2, nrepet = 9999)
+mantade
+mantade <- mantel.rtest(df1, df3, nrepet = 9999)
+mantade
+```
+
+```{r}
+utv1 <- df1[upper.tri(df1, diag = T)]
+utv2 <- df2[upper.tri(df2, diag = T)]
+utv3 <- df3[upper.tri(df3, diag = T)]
+```
+
+```{r}
+cor.test(utv1, utv2, method = "spearman")
+cor.test(utv1, utv3, method = "spearman")
+```
+```{r}
+plot(utv1,utv2,pch=20)
+abline(lm(utv2~utv1),col="red",lwd=2)
+```
+```{r}
+plot(utv1,utv3,pch=20)
+abline(lm(utv3~utv1),col="red",lwd=2)
+```
+```{r}
+df_z1<-scale(df1)
+set.seed(123)
+km.res1 <- kmeans(df1, 4, nstart = 25)
+print(km.res1)
+aggregate(df_z1,by=list(cluster=km.res1$cluster),mean)
+dd1<-cbind(df_z1,cluster=km.res1$cluster)
+head(dd1)
+km.res1$cluster
+head(km.res1$cluster, 4)
+km.res1$size
+km.res1$centers
+fviz_cluster(km.res1,data=df1)
+```
+```{r}
+df_z2<-scale(df2)
+set.seed(123)
+km.res2 <- kmeans(df2, 4, nstart = 25)
+print(km.res2)
+aggregate(df_z2,by=list(cluster=km.res2$cluster),mean)
+dd2<-cbind(df_z2,cluster=km.res2$cluster)
+head(dd2)
+km.res2$cluster
+head(km.res2$cluster, 4)
+km.res2$size
+km.res2$centers
+fviz_cluster(km.res2,data=df2)
+```
+```{r}
+df_z3<-scale(df3)
+set.seed(123)
+km.res3 <- kmeans(df3, 4, nstart = 25)
+print(km.res3)
+aggregate(df_z3,by=list(cluster=km.res1$cluster),mean)
+dd3<-cbind(df_z3,cluster=km.res3$cluster)
+head(dd3)
+km.res3$cluster
+head(km.res3$cluster, 4)
+km.res3$size
+km.res3$centers
+fviz_cluster(km.res3,data=df3)
+```
+```{r}
+fit1 <- kmeans(df_z1, 4)
+clusplot(df_z1, fit1$cluster, color=TRUE, shade=TRUE, labels=2, lines=0)
+
+fit2 <- kmeans(df_z2, 4)
+clusplot(df_z2, fit2$cluster, color=TRUE, shade=TRUE, labels=2, lines=0)
+
+fit3 <- kmeans(df_z3, 4)
+clusplot(df_z3, fit3$cluster, color=TRUE, shade=TRUE, labels=2, lines=0)
+```
+
+```{r}
+
+
+kmeans(df_z1, 4)
+p1 <- as.ggplot(~clusplot(df_z1, fit1$cluster, color=TRUE, shade=TRUE, labels=2, lines=0,main=""))
+
+fit2 <- kmeans(df_z2, 4)
+p2 <- as.ggplot(~clusplot(df_z2, fit2$cluster, color=TRUE, shade=TRUE, labels=2, lines=0,main=""))
+
+fit3 <- kmeans(df_z3, 4)
+p3 <- as.ggplot(~clusplot(df_z3, fit3$cluster, color=TRUE, shade=TRUE, labels=2, lines=0,main=""))
+
+ggarrange(p1, p2, p3,
+          labels = c("A", "B", "C"),
+          ncol = 3, nrow = 1)
+```
+
+
+
+
+

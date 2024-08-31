@@ -1,0 +1,447 @@
+---
+title: "lab4"
+author: "Ed Lu"
+date: "23/02/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = "")
+```
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(psych)
+library(FactoMineR)
+library(factoextra)
+library(cluster)
+library(e1071)
+library(tensorflow)
+library(keras)
+library(reticulate)
+library(e1071)
+library(qgraph)
+library(Rtsne)
+library(tripack)
+library(deldir)
+library(reshape2)
+library(MASS)
+library(magrittr)
+library(dplyr)
+library(ggpubr)
+library(igraph)
+
+```
+
+```{r}
+df<-read.csv("pilotrdm.csv",header=F)
+colnames(df)<-c(
+    'LaughingAdultFemale',
+    'LaughingAdultMale',
+    'LaughingChild',
+    'LaughingGroup',
+    'CryingAdultFemale',
+    'CryingAdultMale',
+    'CryingChild',
+    'ChildrenPlaying',
+    'CocktailParty',
+    'CrowdCheering',
+    'CrowdApplause',
+    'CoughingAdultFemale',
+    'CoughingAdultMale',
+    'Sneezing',
+    'Snoring',
+    'ThroatClearing',
+    'Footsteps',
+    'CatHissing',
+    'CatMeowing',
+    'CatPurring',
+    'BirdSong',
+    'BirdSquawk',
+    'BirdsFlyingOff',
+    'DogBarking',
+    'DogGrowling',
+    'DogHowling',
+    'HorseGalloping',
+    'HorseNeighing',
+    'HorseSnorting',
+    'CowMoo',
+    'InsectBuzzing',
+    'InsectsStridulation',
+    'CarHorn',
+    'CarSkidding',
+    'CarStarting',
+    'TrainBreaks',
+    'TrainSignal',
+    'TrainWagons',
+    'Helicopter',
+    'Propeller',
+    'JetPassing',
+    'DrillingPneumatic',
+    'Drilling',
+    'SawingManual',
+    'Sawing',
+    'Hammer',
+    'Fire',
+    'Rain',
+    'River',
+    'SeaWaves',
+    'Thunder',
+    'Waterfall',
+    'Wind'
+    )
+rownames(df)<-c(
+    'LaughingAdultFemale',
+    'LaughingAdultMale',
+    'LaughingChild',
+    'LaughingGroup',
+    'CryingAdultFemale',
+    'CryingAdultMale',
+    'CryingChild',
+    'ChildrenPlaying',
+    'CocktailParty',
+    'CrowdCheering',
+    'CrowdApplause',
+    'CoughingAdultFemale',
+    'CoughingAdultMale',
+    'Sneezing',
+    'Snoring',
+    'ThroatClearing',
+    'Footsteps',
+    'CatHissing',
+    'CatMeowing',
+    'CatPurring',
+    'BirdSong',
+    'BirdSquawk',
+    'BirdsFlyingOff',
+    'DogBarking',
+    'DogGrowling',
+    'DogHowling',
+    'HorseGalloping',
+    'HorseNeighing',
+    'HorseSnorting',
+    'CowMoo',
+    'InsectBuzzing',
+    'InsectsStridulation',
+    'CarHorn',
+    'CarSkidding',
+    'CarStarting',
+    'TrainBreaks',
+    'TrainSignal',
+    'TrainWagons',
+    'Helicopter',
+    'Propeller',
+    'JetPassing',
+    'DrillingPneumatic',
+    'Drilling',
+    'SawingManual',
+    'Sawing',
+    'Hammer',
+    'Fire',
+    'Rain',
+    'River',
+    'SeaWaves',
+    'Thunder',
+    'Waterfall',
+    'Wind'
+    )
+```
+
+```{r}
+df<-as.matrix(df)
+heatmap(df,scale="column")
+```
+
+```{r}
+fit<-princomp(df,cor=TRUE)
+summary(fit)
+loadings(fit)
+plot(fit,type="lines")
+fit$scores
+biplot(fit)
+```
+
+```{r}
+distance <- get_dist(df)
+fviz_dist(distance, gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
+```
+
+```{r}
+result<-PCA(df)
+```
+```{r}
+d<-dist(df)
+fit<-cmdscale(d,eig=TRUE, k=2) 
+fit
+x<-fit$points[,1]
+y<-fit$points[,2]
+plot(x,y,xlab="Coordinate 1",ylab="Coordinate 2",
+  main="Metric MDS",type="n")
+text(x,y,labels=row.names(df),cex=.7)
+```
+
+```{r}
+df_z<-scale(df)
+set.seed(123)
+km.res <- kmeans(df, 4, nstart = 25)
+print(km.res)
+aggregate(df_z,by=list(cluster=km.res$cluster),mean)
+dd<-cbind(df_z,cluster=km.res$cluster)
+head(dd)
+km.res$cluster
+head(km.res$cluster, 4)
+km.res$size
+km.res$centers
+fviz_cluster(km.res,data=df)
+```
+```{r}
+k2 <- kmeans(df, centers = 2, nstart = 25)
+k3 <- kmeans(df, centers = 3, nstart = 25)
+k4 <- kmeans(df, centers = 4, nstart = 25)
+k5 <- kmeans(df, centers = 5, nstart = 25)
+
+# plots to compare
+p1 <- fviz_cluster(k2, geom = "point", data = df) + ggtitle("k = 2")
+p2 <- fviz_cluster(k3, geom = "point",  data = df) + ggtitle("k = 3")
+p3 <- fviz_cluster(k4, geom = "point",  data = df) + ggtitle("k = 4")
+p4 <- fviz_cluster(k5, geom = "point",  data = df) + ggtitle("k = 5")
+
+library(gridExtra)
+grid.arrange(p1, p2, p3, p4, nrow = 2)
+```
+```{r}
+class_names <- c('animal', 'human', 'machine', 'natural')
+index <- 1:53
+df_ml<-read.csv("pilotrdm.csv",header=F)
+colnames(df_ml)<-c(
+    'LaughingAdultFemale',
+    'LaughingAdultMale',
+    'LaughingChild',
+    'LaughingGroup',
+    'CryingAdultFemale',
+    'CryingAdultMale',
+    'CryingChild',
+    'ChildrenPlaying',
+    'CocktailParty',
+    'CrowdCheering',
+    'CrowdApplause',
+    'CoughingAdultFemale',
+    'CoughingAdultMale',
+    'Sneezing',
+    'Snoring',
+    'ThroatClearing',
+    'Footsteps',
+    'CatHissing',
+    'CatMeowing',
+    'CatPurring',
+    'BirdSong',
+    'BirdSquawk',
+    'BirdsFlyingOff',
+    'DogBarking',
+    'DogGrowling',
+    'DogHowling',
+    'HorseGalloping',
+    'HorseNeighing',
+    'HorseSnorting',
+    'CowMoo',
+    'InsectBuzzing',
+    'InsectsStridulation',
+    'CarHorn',
+    'CarSkidding',
+    'CarStarting',
+    'TrainBreaks',
+    'TrainSignal',
+    'TrainWagons',
+    'Helicopter',
+    'Propeller',
+    'JetPassing',
+    'DrillingPneumatic',
+    'Drilling',
+    'SawingManual',
+    'Sawing',
+    'Hammer',
+    'Fire',
+    'Rain',
+    'River',
+    'SeaWaves',
+    'Thunder',
+    'Waterfall',
+    'Wind'
+    )
+rownames(df_ml)<-c(
+    'LaughingAdultFemale',
+    'LaughingAdultMale',
+    'LaughingChild',
+    'LaughingGroup',
+    'CryingAdultFemale',
+    'CryingAdultMale',
+    'CryingChild',
+    'ChildrenPlaying',
+    'CocktailParty',
+    'CrowdCheering',
+    'CrowdApplause',
+    'CoughingAdultFemale',
+    'CoughingAdultMale',
+    'Sneezing',
+    'Snoring',
+    'ThroatClearing',
+    'Footsteps',
+    'CatHissing',
+    'CatMeowing',
+    'CatPurring',
+    'BirdSong',
+    'BirdSquawk',
+    'BirdsFlyingOff',
+    'DogBarking',
+    'DogGrowling',
+    'DogHowling',
+    'HorseGalloping',
+    'HorseNeighing',
+    'HorseSnorting',
+    'CowMoo',
+    'InsectBuzzing',
+    'InsectsStridulation',
+    'CarHorn',
+    'CarSkidding',
+    'CarStarting',
+    'TrainBreaks',
+    'TrainSignal',
+    'TrainWagons',
+    'Helicopter',
+    'Propeller',
+    'JetPassing',
+    'DrillingPneumatic',
+    'Drilling',
+    'SawingManual',
+    'Sawing',
+    'Hammer',
+    'Fire',
+    'Rain',
+    'River',
+    'SeaWaves',
+    'Thunder',
+    'Waterfall',
+    'Wind'
+    )
+par(mfcol = c(5,6), mar = rep(1, 4), oma = rep(0.2, 4))
+df_ml$train$x[index,,,] %>% 
+  purrr::array_tree(1) %>%
+  purrr::set_names(class_names[df_ml$train$y[index] + 1]) %>% 
+  purrr::map(as.raster, max = 255) %>%
+  purrr::iwalk(~{plot(.x); title(.y)})
+```
+
+```{r}
+model <- keras_model_sequential() %>% 
+  layer_conv_2d(filters = 32, kernel_size = c(3,3), activation = "relu", 
+                input_shape = c(53,53,3)) %>% 
+  layer_max_pooling_2d(pool_size = c(2,2)) %>% 
+  layer_conv_2d(filters = 64, kernel_size = c(3,3), activation = "relu") %>% 
+  layer_max_pooling_2d(pool_size = c(2,2)) %>% 
+  layer_conv_2d(filters = 64, kernel_size = c(3,3), activation = "relu")
+model %>% 
+  layer_flatten() %>% 
+  layer_dense(units = 64, activation = "relu") %>% 
+  layer_dense(units = 10, activation = "softmax")
+```
+
+```{r}
+summary(model)
+```
+
+```{r}
+dist_m <- as.matrix(dist(df))
+dist_mi <- 1/dist_m # one over, as qgraph takes similarity matrices as input
+
+
+qgraph(dist_mi, layout='spring', vsize=3)
+dev.off()
+```
+
+```{r}
+fit <- kmeans(df, 4)
+clusplot(df, fit$cluster, color=TRUE, shade=TRUE, labels=2, lines=0)
+```
+
+```{r}
+plot(df)
+```
+```{r}
+tesselation<-deldir(df)
+tiles <- tile.list(tesselation)
+
+plot(tiles, pch = 4,
+     border = "white",
+     fillcol = hcl.colors(50, "Sunset"))
+```
+
+```{r}
+dst <- data.matrix(df)
+
+dim <- ncol(dst)
+
+image(1:dim, 1:dim, dst, axes = FALSE, xlab="", ylab="")
+
+axis(1, 1:dim, nba[1:53,1], cex.axis = 0.5, las=3)
+axis(2, 1:dim, nba[1:53,1], cex.axis = 0.5, las=1)
+
+text(expand.grid(1:dim, 1:dim), sprintf("%0.1f", dst), cex=0.6)
+```
+```{r}
+fit <- isoMDS(df, k=2)
+fit
+x <- fit$points[,1]
+y <- fit$points[,2]
+plot(x, y, xlab="Coordinate 1", ylab="Coordinate 2",
+  main="Nonmetric MDS", type="n")
+text(x, y, labels = row.names(df), cex=.7)
+```
+```{r}
+g <- graph.full(nrow(df))
+V(g)$label <- row.names(df)
+layout <- layout.mds(g, dist = as.matrix(df))
+plot(g, layout = layout, vertex.size = 3)
+```
+```{r}
+mds <- df %>%
+  dist() %>%          
+  cmdscale() %>%
+  as_tibble()
+colnames(mds) <- c("Dim.1", "Dim.2")
+```
+
+```{r}
+ggscatter(mds, x = "Dim.1", y = "Dim.2", 
+          label = rownames(df),
+          size = 1,
+          repel = TRUE)
+```
+
+```{r}
+clust <- kmeans(mds, 4)$cluster %>%
+  as.factor()
+mds <- mds %>%
+  mutate(groups = clust)
+# Plot and color by groups
+ggscatter(mds, x = "Dim.1", y = "Dim.2", 
+          label = rownames(df),
+          color = "groups",
+          palette = "jco",
+          size = 1, 
+          ellipse = TRUE,
+          ellipse.type = "convex",
+          repel = TRUE)
+```
+
+```{r}
+tsne <- Rtsne(as.matrix(df[,1:53]), check_duplicates = FALSE, pca = FALSE, perplexity=4, theta=0.5, dims=2)
+
+plot3d(df$Y, col=cols[trn[,1]])
+legend3d("topright", legend = '0':'5', pch = 16, col = rainbow(5))
+
+```
+```{r}
+scree(df)
+```
+

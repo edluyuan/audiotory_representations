@@ -1,0 +1,277 @@
+---
+title: "analyses_mds"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## **Analysing data from Meadows platform**
+
+# Load the data
+Download and load the "pilotrdm.csv" file. It contains similarity values computed for each pairwise comparison within our 53-sounds dataset. The similarity matrix has 53 x 53 size. Optional: If you are interested in how this RDM was created, I included the Jypyter notebook that I used to generate it (called: "plotting_weighted_RDM_from_1D_mat_corrected.ipynb").
+
+Note: Because various packages require various data formats (e.g. some packages work with data frames, whereas others with tibbles), we might need to transform the data later so these packages can read them).
+```{r}
+# Load data (RDM)
+# Header as F because you don't want first row of your data to become colnames
+df1<-read.csv("rdm_exp1_freesorting.csv",header=F)
+df2<-read.csv("rdm_exp2_acoustics.csv",header=F)
+df3<-read.csv("rdm_exp3_semantics.csv",header=F)
+```
+
+```{r}
+# Colnames and rownames for your matrix
+animacy_order <- c(
+    'LaughingAdultFemale',
+    'LaughingAdultMale',
+    'LaughingChild',
+    'LaughingGroup',
+    'CryingAdultFemale',
+    'CryingAdultMale',
+    'CryingChild',
+    'ChildrenPlaying',
+    'CocktailParty',
+    'CrowdCheering',
+    'CrowdApplause',
+    'CoughingAdultFemale',
+    'CoughingAdultMale',
+    'Sneezing',
+    'Snoring',
+    'ThroatClearing',
+    'Footsteps',
+    'CatHissing',
+    'CatMeowing',
+    'CatPurring',
+    'BirdSong',
+    'BirdSquawk',
+    'BirdsFlyingOff',
+    'DogBarking',
+    'DogGrowling',
+    'DogHowling',
+    'HorseGalloping',
+    'HorseNeighing',
+    'HorseSnorting',
+    'CowMoo',
+    'InsectBuzzing',
+    'InsectsStridulation',
+    'CarHorn',
+    'CarSkidding',
+    'CarStarting',
+    'TrainBreaks',
+    'TrainSignal',
+    'TrainWagons',
+    'Helicopter',
+    'Propeller',
+    'JetPassing',
+    'DrillingPneumatic',
+    'Drilling',
+    'SawingManual',
+    'Sawing',
+    'Hammer',
+    'Fire',
+    'Rain',
+    'River',
+    'SeaWaves',
+    'Thunder',
+    'Waterfall',
+    'Wind'
+)
+```
+
+```{r}
+# Rename colnames and rownames in your matrix with the proper sound names
+colnames(df1) <- animacy_order
+rownames(df1) <- animacy_order
+colnames(df2) <- animacy_order
+rownames(df2) <- animacy_order
+colnames(df3) <- animacy_order
+rownames(df3) <- animacy_order
+```
+
+## **Multidimensional Scaling (MDS)**
+The overall goal of MDS is to represent the distances between items with the lowest possible dimensional space.
+There are various packages and functions that compute MDS in R. I present a couple of methods here to analyse the data. Please read about each of these methods and their assumptions before you run it so that you can justify and describe the selection of the model in your reports.
+
+## Classical (Metric) MDS (aka Principal Coordinates Analysis)
+R documentation: https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/cmdscale
+
+Classical MDS is a kind of eigenanalysis (sometimes referred to as "singular value decomposition") and calculates a series of eigenvalues and eigenvectors. Each eigenvalue has an eigenvector, and there are as many eigenvectors and eigenvalues as there are rows in the initial matrix. Eigenvalues are usually ranked from the greatest to the least. The first eigenvalue is often called the "dominant" or "leading" eigenvalue. We can visualize the main axes using the eigenvectors through the initial distance matrix. Eigenvalues are also called "latent values". Classic MDS is optimal for quantitative continuous and metric data.
+```{r}
+# Load packages
+library(stats)
+library(ggpubr)
+library(tidyverse)
+```
+
+```{r}
+# Represent data matrix as a list of coordinates in space
+# Look at the data: mdsdf is a two-column list of numbers - these are the coordinates of each point in 2D space.
+mdsdf1 <- df1 %>% stats::cmdscale() %>% as_tibble()
+# Because at this point, your tibble doesn't have any column names yet, you will see a warning from R.
+colnames(mdsdf1) <- c("dim1", "dim2") # Renames column names
+mdsdf2 <- df2 %>% stats::cmdscale() %>% as_tibble()
+# Because at this point, your tibble doesn't have any column names yet, you will see a warning from R.
+colnames(mdsdf2) <- c("dim1", "dim2") # Renames column names
+mdsdf3 <- df3 %>% stats::cmdscale() %>% as_tibble()
+# Because at this point, your tibble doesn't have any column names yet, you will see a warning from R.
+colnames(mdsdf3) <- c("dim1", "dim2") # Renames column names
+```
+
+
+```{r}
+# Plot 2D MDS solution
+ggscatter(mdsdf3, x = "dim1", y = "dim2", 
+          label = rownames(mdsdf3),
+          size = 1,
+          repel = TRUE)
+```
+
+```{r}
+# Retrieve eigenvalues
+# k: the maximum dimensions of the space which the data are to be represented in
+# eig: indicates whether eigenvalues should be returned
+classic_mds1 <- stats::cmdscale(df1, k = 2, eig = TRUE)
+classic_mds1$eig
+classic_mds2 <- stats::cmdscale(df2, k = 2, eig = TRUE)
+classic_mds2$eig
+classic_mds3 <- stats::cmdscale(df3, k = 2, eig = TRUE)
+classic_mds3$eig
+```
+
+Eigenvalues obtained in the analysis are usually reported in order to calculate the overall goodness-of-fit of the distance matrix (R-squared). You can also directly look at the eigenvalues: when they become small, you have enough dimensions.
+```{r}
+# Compute goodness of fit (GOF)
+# Output gives two numbers, one for each dimension.
+cmdscale(df1, k=1, eig=T)$GOF
+cmdscale(df1, k=2, eig=T)$GOF
+cmdscale(df1, k=3, eig=T)$GOF
+cmdscale(df2, k=1, eig=T)$GOF
+cmdscale(df2, k=2, eig=T)$GOF
+cmdscale(df2, k=3, eig=T)$GOF
+cmdscale(df3, k=1, eig=T)$GOF
+cmdscale(df3, k=2, eig=T)$GOF
+cmdscale(df3, k=3, eig=T)$GOF
+```
+
+```{r}
+# Save MDS into variable so you can access the output
+r1 <- cmdscale(df1, eig=TRUE)
+# Plot R-squared
+plot(cumsum(r1$eig) / sum(r1$eig), 
+       type="h", lwd=5, las=1, 
+       xlab="Number of dimensions", 
+       ylab=expression(R^2))
+# Plot eigenvalues
+plot(r1$eig, 
+       type="h", lwd=5, las=1, 
+       xlab="Number of dimensions", 
+       ylab="Eigenvalues")
+r2 <- cmdscale(df2, eig=TRUE)
+# Plot R-squared
+plot(cumsum(r2$eig) / sum(r2$eig), 
+       type="h", lwd=5, las=1, 
+       xlab="Number of dimensions", 
+       ylab=expression(R^2))
+# Plot eigenvalues
+plot(r2$eig, 
+       type="h", lwd=5, las=1, 
+       xlab="Number of dimensions", 
+       ylab="Eigenvalues")
+r3 <- cmdscale(df3, eig=TRUE)
+# Plot R-squared
+plot(cumsum(r3$eig) / sum(r3$eig), 
+       type="h", lwd=5, las=1, 
+       xlab="Number of dimensions", 
+       ylab=expression(R^2))
+# Plot eigenvalues
+plot(r3$eig, 
+       type="h", lwd=5, las=1, 
+       xlab="Number of dimensions", 
+       ylab="Eigenvalues")
+```
+K-means clustering partitions observations into k clusters in which each observation belongs to the cluster with the nearest mean, serving as a prototype of the cluster. Because we could see the emergence of three groupings of data in our earlier MDS plot, let's try to see what clustering will tell us. Can you see any meaningful groupings there?
+```{r}
+# K-means clustering
+clust <- kmeans(mdsdf, 3)$cluster %>% as.factor()
+mdsdf <- mdsdf %>% mutate(groups = clust)
+
+# Plot and color by groups
+ggscatter(mdsdf, x = "dim1", y = "dim2", 
+          label = rownames(dfmat),
+          color = "groups",
+          palette = "jco",
+          size = 1, 
+          ellipse = TRUE,
+          ellipse.type = "convex",
+          repel = TRUE)
+```
+
+
+# Kruskal's Non-metric isoMDS from MASS package
+R documentation: https://www.rdocumentation.org/packages/MASS/versions/7.3-55/topics/isoMDS
+
+Non-metric MDS is also known as ordinal MDS. Here it's not the metric of a distance value that is important or meaningful, but its value in relation to the distances between other pairs of objects. Ordinal MDS constructs fitted distances in the same rank order as the original distances. It's optimal for qualitative, ordinal data.
+```{r}
+# Load packages
+library(MASS)
+```
+
+```{r}
+# Represent data matrix as a list of coordinates in space
+nonm_mds1 <-isoMDS(dist(df1))
+nonm_mds2 <-isoMDS(dist(df2))
+nonm_mds3 <-isoMDS(dist(df3))
+```
+
+```{r}
+# Plot 2D MDS solution
+x1 <- nonm_mds1$points[,1]
+y1 <- nonm_mds1$points[,2]
+plot(x1, y1, xlab = "Coordinate 1", ylab = "Coordinate 2",
+ xlim = range(nonm_mds1$points[,1])*1.2, type = "n")
+text(x1, y1, labels = colnames(df1))
+nonm_sh1 <- Shepard(df1[lower.tri(df1)],
+ nonm_mds1$points)
+x2 <- nonm_mds2$points[,1]
+y2 <- nonm_mds2$points[,2]
+plot(x2, y2, xlab = "Coordinate 1", ylab = "Coordinate 2",
+ xlim = range(nonm_mds2$points[,1])*1.2, type = "n")
+text(x2, y2, labels = colnames(df2))
+nonm_sh2 <- Shepard(df2[lower.tri(df2)],
+ nonm_mds2$points)
+x3 <- nonm_mds3$points[,1]
+y3 <- nonm_mds3$points[,2]
+plot(x3, y3, xlab = "Coordinate 1", ylab = "Coordinate 2",
+ xlim = range(nonm_mds3$points[,1])*1.2, type = "n")
+text(x3, y3, labels = colnames(df3))
+nonm_sh3 <- Shepard(df3[lower.tri(df3)],
+ nonm_mds3$points)
+```
+
+```{r}
+# Plot goodness of fit; you want this line to be as smooth as possible to show that the distance represents the dissimilarity well.
+plot(nonm_sh1, pch = ".", xlab = "Dissimilarity",
+ylab = "Distance", xlim = range(nonm_sh1$x),
+ylim = range(nonm_sh1$x))
+lines(nonm_sh1$x, nonm_sh1$yf, type = "S")
+plot(nonm_sh2, pch = ".", xlab = "Dissimilarity",
+ylab = "Distance", xlim = range(nonm_sh2$x),
+ylim = range(nonm_sh2$x))
+lines(nonm_sh2$x, nonm_sh2$yf, type = "S")
+plot(nonm_sh3, pch = ".", xlab = "Dissimilarity",
+ylab = "Distance", xlim = range(nonm_sh3$x),
+ylim = range(nonm_sh3$x))
+lines(nonm_sh3$x, nonm_sh3$yf, type = "S")
+```
+```{r}
+set.seed(123)
+nmds1 = metaMDS(df1, distance = "euclidean", k=2)
+nmds1
+nmds2 = metaMDS(df2, distance = "euclidean", k=2)
+nmds2
+nmds3 = metaMDS(df3, distance = "euclidean", k=2)
+nmds3
+```
+
